@@ -18,7 +18,7 @@ const transpot = nodemailer.createTransport({
 
     async function sendVerificationEmail(email, otp) {
        const mailOptions = {
-         from: 'your-email@example.com',
+         from: 'mayanijal@gmail.com',
          to: email,
          subject: 'OTP Verification',
          html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
