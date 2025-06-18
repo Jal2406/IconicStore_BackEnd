@@ -62,8 +62,18 @@ router.post('/verify-otp', async (req, res) => {
     }
     try {
         const user = await User.findOne({ email });
-        if (!user || !user.otp || user.otp.toString() !== otp.toString()) {
+        if (user.otp.toString() !== otp.toString()) {
             return res.status(404).json({ message: 'Invalid OTP or email' });
+        }
+        else if(!user.otp){
+            return res.json({
+                message:'OTP not Saving'
+            })
+        }
+        else if(!user){
+            return res.json({
+                message:"User Not Found"
+            })
         }
         user.otp = null;
         const resetToken = await jwt.sign({ email: user.email }, JWT_SEC);
