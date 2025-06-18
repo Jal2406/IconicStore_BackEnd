@@ -11,6 +11,14 @@ const UserSchema = new mongoose.Schema({
         type: String,
         enum: ['admin', 'buyer'],
         default: 'buyer'
+    },
+    otp:{
+      type:String,
+      default:null
+    },
+    token:{
+      type:String,
+      default:null
     }
 })
 
