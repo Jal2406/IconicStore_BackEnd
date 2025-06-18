@@ -1,10 +1,10 @@
 const express = require('express')
 const cors = require('cors');
 const app = express();
-// app.use(cors({
-//   origin: process.env.CLIENT_URL || 'http://localhost:3001',
-//   credentials: true
-// }));
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3001',
+  credentials: true
+}));
 
 const loginRoute = require('./Routes/login')
 const signupRoute = require('./Routes/signup');
