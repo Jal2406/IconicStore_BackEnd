@@ -50,7 +50,7 @@ router.post('/forget-password', async (req, res) => {
         await sendVerificationEmail(email, otp);
         res.status(200).json({ message: 'OTP sent to your email' });
     } catch (error) {
-
+        res.status(500)
     }
 })
 
@@ -61,12 +61,11 @@ router.post('/verify-otp', async (req, res) => {
         return res.status(400).json({ message: 'Email and OTP are required' });
     }
     try {
-        const user = await User.findOne({ email, otp });
-        if (!user) {
+        const user = await User.findOne({ email });
+        if (!user || !user.otp || user.otp.toString() !== otp.toString()) {
             return res.status(404).json({ message: 'Invalid OTP or email' });
         }
         user.otp = null;
-        await user.save();
         const resetToken = await jwt.sign({ email: user.email }, JWT_SEC);
         user.token = resetToken;
         await user.save();
@@ -78,7 +77,7 @@ router.post('/verify-otp', async (req, res) => {
         console.error('Error verifying OTP:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-})
+});
 
 
 router.post('/reset-password', async (req, res) => {
