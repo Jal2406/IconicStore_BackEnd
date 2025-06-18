@@ -50,7 +50,7 @@ router.post('/forget-password', async (req, res) => {
         await sendVerificationEmail(email, otp);
         res.status(200).json({ message: 'OTP sent to your email' });
     } catch (error) {
-        res.status(500)
+
     }
 })
 
@@ -60,35 +60,35 @@ router.post('/verify-otp', async (req, res) => {
     if (!email || !otp) {
         return res.status(400).json({ message: 'Email and OTP are required' });
     }
+
     try {
+        console.log(`Verifying OTP for ${email} with OTP ${otp}`);
         const user = await User.findOne({ email });
-        const DBotp = ''+user.otp;
-        if (user.otp.toString() !== otp.toString()) {
-            return res.status(404).json({ message: 'Invalid OTP or email' });
+
+        if (!user) {
+            console.log('User not found');
+            return res.status(404).json({ message: 'User not found' });
         }
-        else if(!user.otp){
-            return res.json({
-                message:'OTP not Saving'
-            })
+
+        if (user.otp != otp) {
+            console.log(`Invalid OTP. Expected ${user.otp}, got ${otp}`);
+            return res.status(401).json({ message: 'Invalid OTP' });
         }
-        else if(!user){
-            return res.json({
-                message:"User Not Found"
-            })
-        }
+
         user.otp = null;
-        const resetToken = await jwt.sign({ email: user.email }, JWT_SEC);
+
+        const resetToken = jwt.sign({ email: user.email }, JWT_SEC || 'fallbackSecret');
         user.token = resetToken;
         await user.save();
-        res.status(200).json({ 
-            message: 'OTP verified successfully',
-            token: resetToken 
-        });
+
+        console.log('OTP verified, token generated');
+        res.status(200).json({ message: 'OTP verified successfully', token: resetToken });
     } catch (error) {
         console.error('Error verifying OTP:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 
 router.post('/reset-password', async (req, res) => {
