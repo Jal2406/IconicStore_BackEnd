@@ -62,6 +62,7 @@ router.post('/verify-otp', async (req, res) => {
     }
     try {
         const user = await User.findOne({ email });
+        const DBotp = ''+user.otp;
         if (user.otp.toString() !== otp.toString()) {
             return res.status(404).json({ message: 'Invalid OTP or email' });
         }
