@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+require('dotenv').config();
 
 exports.generateTokenAndRedirect = (req, res) => {
   const user = req.user;
