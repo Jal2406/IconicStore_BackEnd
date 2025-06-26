@@ -4,7 +4,7 @@ require('./Routes/GoogleAuth')
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
-
+require('dotenv').config();
 const app = express();
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3001',
