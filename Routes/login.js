@@ -5,6 +5,32 @@ const router = express.Router();
 const JWT_SEC = 'asd123';
 const bcrypt = require('bcryptjs')
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login user
+ *     description: Authenticates a user and returns a JWT token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               pass:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       403:
+ *         description: Invalid password
+ *       404:
+ *         description: User does not exist
+ */
+
 router.post('/',async(req, res) => {
     const user = await User.findOne({
         email:req.body.email
@@ -42,6 +68,7 @@ router.get('/profile', async (req, res) => {
         const token = req.headers.authorization;
         if (!token) return res.status(401).json({ message: 'No token' });
         const decoded = jwt.verify(token, JWT_SEC);
+        console.log(decoded)
         const user = await User.findById(decoded.userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json({ fname: user.fname, lname: user.lname, email: user.email });
@@ -50,7 +77,7 @@ router.get('/profile', async (req, res) => {
     }
 });
 
-// Update user profile (except password)
+
 router.put('/profile', async (req, res) => {
     try {
         const token = req.headers.authorization;
@@ -108,4 +135,7 @@ router.get('/verify-admin', async (req, res) => {
         res.status(401).json({ message: 'Invalid token' });
     }
 });
+
+
+
 module.exports = router;

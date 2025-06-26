@@ -19,8 +19,12 @@
     "mongoose": "^8.15.1",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
+    "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "path": "^0.12.7",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui": "^5.25.2",
+    "swagger-ui-express": "^5.0.1"
   }
 }

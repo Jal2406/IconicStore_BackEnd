@@ -4,8 +4,11 @@ mongoose.connect('mongodb+srv://mayanijal:dbUser@cluster0.tgfv17w.mongodb.net/')
 
 const UserSchema = new mongoose.Schema({
     fname: {type:String, required: true},
-    lname: {type:String, required: true},
-    pass: {type:String, required: true},
+    lname: {type:String, default:''},
+    pass: {
+      type:String, 
+      required: function(){return !this.googleId}
+    },
     email: {type:String, required: true, unique: true},
     role:{
         type: String,
@@ -19,6 +22,10 @@ const UserSchema = new mongoose.Schema({
     token:{
       type:String,
       default:null
+    },
+    googleId:{
+      type: String,
+      default: null
     }
 })
 
@@ -37,7 +44,7 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: ['Shoes', 'Watches', 'Audio', 'Clothing', 'Accessories', 'Electronics'], 
+      enum: ['Watches', 'Fashion', 'Clothing', 'Accessories', 'Electronics', 'Footwear'], 
     },
     subCategory: {
       type: String,
@@ -86,9 +93,6 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-
-
 
 const CartSchema = new mongoose.Schema({
     userId: {

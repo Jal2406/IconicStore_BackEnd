@@ -107,7 +107,10 @@ router.get('/cart',authmiddle, async (req, res) => {
         return res.status(400).json({ message: 'User ID is required' });
     }
     try {
-        const cart = await Cart.findOne({ userId }).populate('products.productId');
+        const tempCart = await Cart.findOne({userId})
+        console.log(tempCart)
+        const cart = await tempCart.populate('products.productId');
+        console.log(cart)
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }

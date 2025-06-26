@@ -1,5 +1,10 @@
 const express = require('express')
+const passport = require('passport')
+require('./Routes/GoogleAuth')
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
+
 const app = express();
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3001',
@@ -21,6 +26,10 @@ app.use('/orders', require('./Routes/orders'));
 app.use('/admin', require('./Routes/admin'));
 app.use('/payment', require('./Routes/payment'));
 app.use('/user', require('./Routes/user'))
+app.use(passport.initialize());
+app.use('/auth', require('./Routes/auth'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 
 const PORT = process.env.PORT || 3000;
