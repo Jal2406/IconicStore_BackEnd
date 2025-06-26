@@ -10,7 +10,7 @@ router.get('/google', passport.authenticate('google', {
 
 router.get('/google/callback',
   passport.authenticate('google', {
-    failureRedirect: 'http://localhost:3001/login',
+    failureRedirect: `${process.env.CLIENT_URL}login`,
     session: false
   }),
   generateTokenAndRedirect

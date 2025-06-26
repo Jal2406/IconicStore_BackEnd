@@ -9,5 +9,5 @@ exports.generateTokenAndRedirect = (req, res) => {
     userId: user._id
   }, process.env.JWT_SECRET || 'asd123');
 
-  res.redirect(`https://iconic-store-front-end-x8ys.vercel.app/?token=${token}`);
+  res.redirect(`${process.env.CLIENT_URL}?token=${token}`);
 };
