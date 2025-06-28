@@ -3,7 +3,9 @@ const { User } = require('../db');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const JWT_SEC = 'asd123';
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const {authSession} = require('../middleware/authSession')
+const authmiddle = require('../middleware/authmiddle');
 
 /**
  * @swagger
@@ -39,15 +41,9 @@ router.post('/',async(req, res) => {
     if (user) {
         const isPasswordValid = await bcrypt.compare(req.body.pass, user.pass)
         if (isPasswordValid) {
-            const token = jwt.sign({userId:user._id}, JWT_SEC)
-            return res.json({
-                token,
-                message: "Login successful",
-                user: {
-                    role: user.role,
-                    fname: user.fname,
-                    }
-            })
+            // const token = jwt.sign({userId:user._id}, JWT_SEC)
+            req.session.userId = user._id;
+            return res.json({ success: true, redirectUrl: process.env.CLIENT_URL});
         }
         else{
             return res.status(403).json({
@@ -63,28 +59,43 @@ router.post('/',async(req, res) => {
 })
 
 // Get user profile
-router.get('/profile', async (req, res) => {
+router.get('/profile', authSession, async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        if (!token) return res.status(401).json({ message: 'No token' });
-        const decoded = jwt.verify(token, JWT_SEC);
-        console.log(decoded)
-        const user = await User.findById(decoded.userId);
+        const decoded = req.user;
+        const user = await User.findById(decoded);
         if (!user) return res.status(404).json({ message: 'User not found' });
-        res.json({ fname: user.fname, lname: user.lname, email: user.email });
+        res.json({ fname: user.fname, lname: user.lname, email: user.email, role: user.role });
     } catch (err) {
         res.status(401).json({ message: 'Invalid token' });
     }
 });
-
-
-router.put('/profile', async (req, res) => {
+router.get('/checkProfile', async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        if (!token) return res.status(401).json({ message: 'No token' });
-        const decoded = jwt.verify(token, JWT_SEC);
+        const decoded = req.session.userId;
+        // const decoded = req.user;
+        const user = await User.findById(decoded);
+        if (!user) return res.json({ role: null});
+        res.json({ fname: user.fname, lname: user.lname, email: user.email, role: user.role });
+    } catch (err) {
+        res.json({role:null});
+    }
+});
+
+router.delete('/', async(req, res) => {
+    req.session.destroy(() => {
+        res.clearCookie('connect.sid')
+        res.status(200).json({
+            message:"Logged Out"
+        })
+    })
+})
+
+
+router.put('/profile', authSession, async (req, res) => {
+    try {
+        const decoded = req.user;
         const { fname, lname, email } = req.body;
-        const user = await User.findById(decoded.userId);
+        const user = await User.findById(decoded);
         if (!user) return res.status(404).json({ message: 'User not found' });
         user.fname = fname;
         user.lname = lname;
@@ -97,13 +108,11 @@ router.put('/profile', async (req, res) => {
 });
 
 // Change password
-router.put('/change-password', async (req, res) => {
+router.put('/change-password', authSession, async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        if (!token) return res.status(401).json({ message: 'No token' });
-        const decoded = jwt.verify(token, JWT_SEC);
+        const decoded = req.user;
         const { oldPass, newPass } = req.body;
-        const user = await User.findById(decoded.userId);
+        const user = await User.findById(decoded);
         if (!user) return res.status(404).json({ message: 'User not found' });
         const isPasswordValid = await bcrypt.compare(oldPass, user.pass);
         if (!isPasswordValid) return res.status(400).json({ message: 'Old password is incorrect' });
@@ -118,21 +127,20 @@ router.put('/change-password', async (req, res) => {
 // Add this new route to verify admin status
 router.get('/verify-admin', async (req, res) => {
     try {
-        const token = req.headers.authorization;
-        if (!token) return res.status(401).json({ message: 'No token' });
+        const decoded = req.user;
+        const user = await User.findById(decoded);
         
-        const decoded = jwt.verify(token, JWT_SEC);
-        const user = await User.findById(decoded.userId);
-        
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.json({ message: 'User not found', isAdmin: false });
         
         if (user.role !== 'admin') {
-            return res.status(403).json({ message: 'Not an admin', isAdmin: false });
+            return res.json({ message: 'Not an admin', isAdmin: false });
         }
-        
         res.json({ isAdmin: true });
     } catch (err) {
-        res.status(401).json({ message: 'Invalid token' });
+        res.json({ 
+            message: 'Invalid token',
+            isAdmin: false
+         });
     }
 });
 

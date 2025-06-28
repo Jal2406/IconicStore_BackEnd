@@ -1,5 +1,5 @@
 const express = require('express');
-const { User } = require('../db');
+const { User, Order } = require('../db');
 const router = express.Router();
 const authmiddle = require('../middleware/authmiddle');
 const axios = require('axios');
@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const JWT_SEC = 'asd123';
 const jwt = require('jsonwebtoken');
+
+
 
 const transpot = nodemailer.createTransport({
     service: 'gmail',
@@ -16,7 +18,7 @@ const transpot = nodemailer.createTransport({
 }
 })
 
-    async function sendVerificationEmail(email, otp) {
+async function sendVerificationEmail(email, otp) {
        const mailOptions = {
          from: 'mayanijal@gmail.com',
          to: email,
@@ -32,6 +34,117 @@ const transpot = nodemailer.createTransport({
          throw error;
        }
     }
+
+const OrderVerificationMail = async (orderId) => {
+    console.log('orderId',orderId);
+    
+    try {
+        console.log(orderId)
+        const populatedOrder = await Order.findById(orderId)
+            .populate('userId')
+            .populate('products.productId');
+           if (!populatedOrder) throw new Error(`Order not found: ${orderId}`);
+      
+        const customerName = populatedOrder.userId.fname || 'Customer';
+        const customerEmail = populatedOrder.userId.email;
+      
+        const orderDate = populatedOrder.createdAt.toDateString();
+        const shippingAddress = populatedOrder.address;
+        const totalAmount = populatedOrder.totalAmount;
+      
+        const itemsHtml = populatedOrder.products.map(p => `
+          <tr>
+            <td style="padding:10px; border:1px solid #ddd;">${p.productId.name}</td>
+            <td style="padding:10px; border:1px solid #ddd; text-align:center;">${p.quantity}</td>
+            <td style="padding:10px; border:1px solid #ddd; text-align:right;">₹${p.productId.price * p.quantity}</td>
+          </tr>
+        `).join('');
+      
+        const mailOptions = {
+          from: 'mayanijal@gmail.com',
+          to: customerEmail,
+          subject: "Order Placed Successfully!!",
+          html: `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Order Confirmation</title>
+      </head>
+      <body style="margin:0; padding:0; background-color:#f5f5f5; font-family: Arial, sans-serif; color:#333;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5; padding: 40px 0;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td style="background-color:#007bff; color:#ffffff; padding:20px; text-align:center;">
+                    <h1 style="margin:0; font-size:24px;">Your Order is Confirmed!</h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:30px;">
+                    <p style="font-size:16px;">Hi <strong>${customerName}</strong>,</p>
+                    <p style="font-size:16px;">Thank you for shopping with us! Your order has been successfully placed.</p>
+                    <p style="font-size:16px;">Here are your order details:</p>
+      
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse; margin:20px 0;">
+                      <tr>
+                        <td style="padding:8px 0; font-weight:bold;">Order ID:</td>
+                        <td style="padding:8px 0;">${populatedOrder._id}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0; font-weight:bold;">Order Date:</td>
+                        <td style="padding:8px 0;">${orderDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0; font-weight:bold;">Shipping Address:</td>
+                        <td style="padding:8px 0;">${shippingAddress}</td>
+                      </tr>
+                    </table>
+      
+                    <h3 style="font-size:18px; margin:20px 0 10px;">Items Ordered:</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #ddd; border-collapse:collapse;">
+                      <thead style="background-color:#f0f0f0;">
+                        <tr>
+                          <th style="padding:10px; border:1px solid #ddd; text-align:left;">Product</th>
+                          <th style="padding:10px; border:1px solid #ddd; text-align:center;">Qty</th>
+                          <th style="padding:10px; border:1px solid #ddd; text-align:right;">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itemsHtml}
+                        <tr>
+                          <td colspan="2" style="padding:10px; border:1px solid #ddd; text-align:right; font-weight:bold;">Total:</td>
+                          <td style="padding:10px; border:1px solid #ddd; text-align:right; font-weight:bold;">₹${totalAmount}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+      
+                    <p style="font-size:16px; margin:20px 0;">We will notify you once your order is shipped.</p>
+      
+                    <p style="font-size:16px;">If you have any questions, reply to this email or contact our support team at <a href="mailto:support@example.com">support@example.com</a>.</p>
+      
+                    <p style="font-size:16px;">Thank you for choosing us!</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color:#f0f0f0; padding:20px; text-align:center; font-size:12px; color:#666;">
+                    &copy; ${new Date().getFullYear()} Your Store Name. All rights reserved.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>`
+        };
+        await transpot.sendMail(mailOptions);
+    } catch (error) {
+        console.log('Error Sending Mail', error)
+    }
+};
+
+router.OrderVerificationMail = OrderVerificationMail
 
 router.post('/forget-password', async (req, res) => {
     const { email } = req.body;

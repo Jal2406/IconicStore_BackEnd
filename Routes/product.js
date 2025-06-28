@@ -1,10 +1,14 @@
 const express = require('express');
 const { Product, Cart, Order, Wishlist } = require('../db');
 const router = express.Router();
-const authmiddle = require('../middleware/authmiddle');
+// const authSession = require('../middleware/authSession');
 const multer = require("multer");
 const path = require("path");
 const adminOnly = require('../middleware/adminAuth');
+const { authSession } = require('../middleware/authSession');
+const nodemailer = require('nodemailer');
+const { OrderVerificationMail } = require('./user');
+
 
 
 const storage = multer.diskStorage({
@@ -28,7 +32,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authmiddle, adminOnly, upload.single('image'), async (req, res) => {
+router.post('/', authSession, adminOnly, upload.single('image'), async (req, res) => {
   const { name, brand, price, category, subCategory, stock, color, size, description } = req.body;
 
   if (!name || !price || !category) {
@@ -58,7 +62,7 @@ router.post('/', authmiddle, adminOnly, upload.single('image'), async (req, res)
 });
 
 
-router.put('/:id', authmiddle, adminOnly, async (req, res) => {
+router.put('/:id', authSession, adminOnly, async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
@@ -76,9 +80,9 @@ router.put('/:id', authmiddle, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/addTocart', authmiddle, async (req, res) => {
+router.post('/addTocart', authSession, async (req, res) => {
     const { productId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user;
     if (!userId || !productId) {
         return res.status(400).json({ message: 'User ID and Product ID are required' });
     }
@@ -101,16 +105,14 @@ router.post('/addTocart', authmiddle, async (req, res) => {
     }
 });
 
-router.get('/cart',authmiddle, async (req, res) => {
-    const userId = req.user.userId;
+router.get('/cart',authSession, async (req, res) => {
+    const userId = req.user;
     if (!userId) {
         return res.status(400).json({ message: 'User ID is required' });
     }
     try {
         const tempCart = await Cart.findOne({userId})
-        console.log(tempCart)
         const cart = await tempCart.populate('products.productId');
-        console.log(cart)
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }
@@ -120,8 +122,8 @@ router.get('/cart',authmiddle, async (req, res) => {
     }
 })
 
-router.delete('/cart/:productId', authmiddle, async (req, res) => {
-  const userId = req.user.userId;
+router.delete('/cart/:productId', authSession, async (req, res) => {
+  const userId = req.user;
   const { productId } = req.params;
   if (!userId || !productId) {
     return res.status(400).json({ message: 'User ID and Product ID are required' });
@@ -139,9 +141,9 @@ router.delete('/cart/:productId', authmiddle, async (req, res) => {
   }
 });
 
-router.post('/checkout', authmiddle, async (req, res) => {
+router.post('/checkout', authSession, async (req, res) => {
   const { address, paymentMethod, products, totalAmount } = req.body;
-  const userId = req.user.userId;
+  const userId = req.user;
 
   if (!address || !paymentMethod || !products || products.length === 0) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -160,15 +162,16 @@ router.post('/checkout', authmiddle, async (req, res) => {
       { userId },
       { $set: { products: [] } }
     );
-
+    // console.log(order)
+    await OrderVerificationMail(order._id)
     res.json({ message: 'Checkout successful', orderDetails: { address, paymentMethod, products } });
   } catch (error) {
     res.status(500).json({ message: 'Error during checkout', error: error.message });
   }
-});
+}); 
 
-router.get('/wishlist', authmiddle, async (req, res) => {
-  const userId = req.user.userId;
+router.get('/wishlist', authSession, async (req, res) => {
+  const userId = req.user;
   if (!userId) {
     return res.status(400).json({ message: 'User ID is required' });
   }
@@ -183,9 +186,9 @@ router.get('/wishlist', authmiddle, async (req, res) => {
   }
 });
 
-router.post('/wishlist', authmiddle, async (req, res) => {
+router.post('/wishlist', authSession, async (req, res) => {
   const { productId } = req.body;
-  const userId = req.user.userId;
+  const userId = req.user;
 
   if (!userId || !productId) {
     return res.status(400).json({ message: 'User ID and Product ID are required' });
@@ -208,8 +211,8 @@ router.post('/wishlist', authmiddle, async (req, res) => {
   }
 });
 
-router.delete('/wishlist/', authmiddle, async (req, res) => {
-  const userId = req.user.userId;
+router.delete('/wishlist', authSession, async (req, res) => {
+  const userId = req.user;
   const { productId } = req.body;
 
   if (!userId || !productId) {
@@ -251,6 +254,5 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: 'Error searching products' });
   }
 })
-
 
 module.exports = router;

@@ -1,10 +1,11 @@
 const express = require('express');
-const authmiddle = require('../middleware/authmiddle');
+// const authSession = require('../middleware/authSession');
 const { User } = require('../db');
 const router = express.Router();
 const adminOnly = require('../middleware/adminAuth');
+const { authSession } = require('../middleware/authSession');
 
-router.get('/users', authmiddle, adminOnly, async(req, res) => {
+router.get('/users', authSession, adminOnly, async(req, res) => {
     try{
         const buyers = await User.find({ role: 'buyer' });
         res.json(buyers);
@@ -15,7 +16,7 @@ router.get('/users', authmiddle, adminOnly, async(req, res) => {
     }
 });
 
-router.delete('/users/:id', authmiddle, adminOnly, async(req, res) => {
+router.delete('/users/:id', authSession, adminOnly, async(req, res) => {
     const userId = req.params.id;
     try {
         const user = await User.findById(userId);

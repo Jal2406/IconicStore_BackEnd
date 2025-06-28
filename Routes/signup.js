@@ -22,18 +22,16 @@ router.post('/', async (req, res)=>{
     
     const user = await User.create({ email: req.body.email, pass: hashedPassword, 
         fname: req.body.fname, lname: req.body.lname, role: req.body.role });
-    const token = jwt.sign({
-        userId: user._id,
-        role: user.role,
-    }, JWT_SEC)
-    return res.status(200).json({
-        message:'User Created',
-        token,
-        user: {
-            role: user.role,
-            fname: user.fname,
-        }
-    })
+    req.session.userId = user._id;
+    // return res.status(200).json({
+    //     message:'User Created',
+    //     token,
+    //     user: {
+    //         role: user.role,
+    //         fname: user.fname,
+    //     }
+    // })
+    return res.json({ success: true, redirectUrl: process.env.CLIENT_URL });
 })
 
 module.exports = router;

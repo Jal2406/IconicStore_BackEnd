@@ -4,13 +4,14 @@ const express = require('express');
 const {Order, Cart} = require('../db');
 const router = express.Router();
 const authmiddle = require('../middleware/authmiddle');
+const { authSession } = require('../middleware/authSession');
 
 var instance = new Razorpay({
   key_id: 'rzp_test_JVB6uyPjz1CHAi',
   key_secret: 'UYFJ5z2rOUi3ZJgBniINlICp',
 });
 
-router.post('/create-order', authmiddle, async (req, res) => {
+router.post('/create-order', authSession, async (req, res) => {
     const { amount, currency='INR', receipt } = req.body;
    
     try{
@@ -27,7 +28,7 @@ router.post('/create-order', authmiddle, async (req, res) => {
     }
 })
 
-router.post('/verify-payment', authmiddle, async (req, res) => {
+router.post('/verify-payment', authSession, async (req, res) => {
   const {
     razorpay_order_id,
     razorpay_payment_id,

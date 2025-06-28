@@ -1,5 +1,7 @@
 const express = require('express')
 const passport = require('passport')
+const session = require('express-session')
+const MongoStore = require('connect-mongo')
 require('./Routes/GoogleAuth')
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -16,6 +18,18 @@ const signupRoute = require('./Routes/signup');
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use(express.json())
+app.use(session({
+  secret: process.env.SESSION_SEC,
+  resave: false,
+  saveUninitialized: false,
+  cookie:{
+    secure:false
+  },
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: "sessions"
+  })
+}))
 app.get('/', (req, res) => {
   res.send('API is running...');
 })
