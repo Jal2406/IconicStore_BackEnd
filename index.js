@@ -23,7 +23,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie:{
-    secure:false
+    secure:false,
+    sameSite: 'none',
+    httpOnly: true
   },
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
