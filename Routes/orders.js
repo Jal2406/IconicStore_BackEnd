@@ -192,6 +192,7 @@ router.get('/', authSession, adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'Order not found', updatedOrder });
     }
 
+
     await sendStatusWP(orderId)
     await sendStatusMail(orderId)
     res.json({ message: 'Order status updated', order: updatedOrder });

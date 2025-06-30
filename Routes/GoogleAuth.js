@@ -5,7 +5,7 @@ const GoogleStrat = require('passport-google-oauth20').Strategy;
 passport.use(new GoogleStrat({
     clientID:'294359618394-f055bq3kmntmmgrh5mr5leguskkeuumt.apps.googleusercontent.com',
     clientSecret:'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',
-    callbackURL: 'https://iconicstore-backend.onrender.com/auth/google/callback'
+    callbackURL: `${process.env.BACKEND_API}/auth/google/callback`
 }, async function(accessToken, refreshToken, profile, done){
 
     try {
@@ -31,3 +31,11 @@ passport.use(new GoogleStrat({
     }
 }
 ))
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
+    const user = await User.findById(id);
+    done(null, user);
+});

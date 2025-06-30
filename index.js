@@ -7,6 +7,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 const app = express();
 app.use(cors({
   origin: process.env.CLIENT_URL,
@@ -18,14 +19,16 @@ const signupRoute = require('./Routes/signup');
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use(express.json())
+app.set('trust proxy', 1);
+app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SEC,
   resave: false,
   saveUninitialized: false,
   cookie:{
-    secure:true,
-    sameSite: 'none',
-    // httpOnly: true
+    secure:process.env.NODE_ENV === 'production',
+    sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: true
   },
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,

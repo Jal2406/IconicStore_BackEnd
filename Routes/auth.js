@@ -11,10 +11,14 @@ router.get('/google', passport.authenticate('google', {
 
 router.get('/google/callback',
   passport.authenticate('google', {
-    failureRedirect: `${process.env.CLIENT_URL}login`,
-    session: false
+    failureRedirect: `${process.env.CLIENT_URL}/login`,
+    session: true
   }),
-  generateTokenAndRedirect
+  (req, res) => {
+    const userId = req.user
+    req.session.userId = userId
+    res.redirect(process.env.CLIENT_URL);
+  }
 );
 
 module.exports = router;
