@@ -30,7 +30,7 @@
     "path": "^0.12.7",
     "razorpay": "^2.9.6",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui": "^5.25.2",
+    "swagger-ui": "^5.29.3",
     "swagger-ui-express": "^5.0.1",
     "twilio": "^5.7.1"
   }
