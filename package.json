@@ -32,6 +32,6 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui": "^5.25.2",
     "swagger-ui-express": "^5.0.1",
-    "twilio": "^5.7.1"
+    "twilio": "^5.10.2"
   }
 }
